@@ -5,6 +5,7 @@ theprotocol.it, whose own API rejects unauthenticated calls.
 """
 from __future__ import annotations
 
+from typing import Any, cast
 from urllib.parse import quote
 
 from ..common import Offer, flight_payload, get, json_after, polite
@@ -26,12 +27,14 @@ def fetch(query: str, max_pages: int = 2) -> list[Offer]:
         if not rows:
             break
         for r in rows:
-            hl = r.get("highlight") or {}
+            hl: dict[str, Any] = r.get("highlight") or {}
             raw_kws = list(hl.get("keywords") or []) + list(r.get("keywords") or [])
             kws = [k.replace("<mark>", "").replace("</mark>", "")
                    for k in raw_kws if isinstance(k, str)]
-            company = r.get("company") or {}
+            company: dict[str, Any] = r.get("company") or {}
             href = r.get("url") or ""
+            technologies = cast(list[Any], r.get("technologies") or [])
+            description: dict[str, Any] = r.get("description") or {}
             offers.append(Offer(
                 source=f"{NAME}:{r.get('source', '?')}",
                 title=(r.get("title") or "").strip(),
@@ -44,8 +47,8 @@ def fetch(query: str, max_pages: int = 2) -> list[Offer]:
                 salary_min=r.get("normalizedSalaryMin"),
                 salary_max=r.get("normalizedSalaryMax"),
                 currency="PLN" if r.get("hasSalary") else "",
-                skills=kws + [t for t in (r.get("technologies") or []) if isinstance(t, str)],
-                text=((r.get("description") or {}).get("summary") or "")[:400],
+                skills=kws + [t for t in technologies if isinstance(t, str)],
+                text=str(description.get("summary") or "")[:400],
             ))
         polite()
         if len(rows) < 100:

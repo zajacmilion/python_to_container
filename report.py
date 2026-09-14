@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from html import escape
 from pathlib import Path
+from typing import Any
 
 DATA = Path("data")
 BUCKET_LABELS = {
@@ -23,8 +24,8 @@ def bar(pct: float) -> str:
     return f'<div class="bar" style="width:{min(pct, 100):.1f}%"></div>'
 
 
-def tech_table(tech: list[dict], limit: int = 20) -> str:
-    rows = []
+def tech_table(tech: list[dict[str, Any]], limit: int = 20) -> str:
+    rows: list[str] = []
     for t in tech[:limit]:
         sal = f"{t['median_salary']:,} PLN".replace(",", " ") if t["median_salary"] else "–"
         rows.append(f"""
@@ -43,7 +44,7 @@ def tech_table(tech: list[dict], limit: int = 20) -> str:
     </table>"""
 
 
-def bucket_section(key: str, data: dict) -> str:
+def bucket_section(key: str, data: dict[str, Any]) -> str:
     sources = ", ".join(f"{k} ({v})" for k, v in data["sources"].items())
     return f"""
     <section>
@@ -53,8 +54,8 @@ def bucket_section(key: str, data: dict) -> str:
     </section>"""
 
 
-def gap_section(gap: list[dict]) -> str:
-    rows = []
+def gap_section(gap: list[dict[str, Any]]) -> str:
+    rows: list[str] = []
     for g in gap[:15]:
         rows.append(f"""
         <tr>
@@ -72,8 +73,8 @@ def gap_section(gap: list[dict]) -> str:
     </section>"""
 
 
-def load_offers() -> list[dict]:
-    offers = []
+def load_offers() -> list[dict[str, Any]]:
+    offers: list[dict[str, Any]] = []
     for f in sorted(DATA.glob("offers_*.json")):
         profile = f.stem.removeprefix("offers_")
         for o in json.loads(f.read_text(encoding="utf-8")):
@@ -82,7 +83,7 @@ def load_offers() -> list[dict]:
     return offers
 
 
-def salary_range(o: dict) -> str:
+def salary_range(o: dict[str, Any]) -> str:
     lo, hi, cur = o.get("salary_min"), o.get("salary_max"), o.get("currency")
     if not lo and not hi:
         return "–"
@@ -91,11 +92,11 @@ def salary_range(o: dict) -> str:
     return f"{(lo or hi):,.0f} {cur}".replace(",", " ")
 
 
-def offers_section(offers: list[dict]) -> str:
+def offers_section(offers: list[dict[str, Any]]) -> str:
     profiles = sorted({o["profile"] for o in offers})
     sources = sorted({o["source"].split(":")[0] for o in offers})
 
-    rows = []
+    rows: list[str] = []
     for o in offers:
         skills = ", ".join(o.get("skills") or [])
         source = o["source"].split(":")[0]
@@ -158,8 +159,8 @@ def offers_section(offers: list[dict]) -> str:
     </script>"""
 
 
-def overlap_section(overlap: list[dict]) -> str:
-    rows = []
+def overlap_section(overlap: list[dict[str, Any]]) -> str:
+    rows: list[str] = []
     for o in sorted(overlap, key=lambda x: -x["ai_pct"])[:12]:
         rows.append(f"""
         <tr>

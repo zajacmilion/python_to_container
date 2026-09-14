@@ -10,10 +10,12 @@ import json
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_buffering=True)
 
-from python_to_container.scraper.aggregate import analyse, dedupe            # noqa: E402
+from python_to_container.scraper.aggregate import analyse, dedupe  # noqa: E402
+from python_to_container.scraper.common import Offer  # noqa: E402
 from python_to_container.scraper.sources import eldorado, justjoin, nofluff, pracuj  # noqa: E402
 
 SOURCES = [justjoin, nofluff, pracuj, eldorado]
@@ -32,8 +34,8 @@ BRIDGE_QUERIES = [
 OUT = Path("data")
 
 
-def collect(queries: list[str], pages: int) -> list:
-    offers = []
+def collect(queries: list[str], pages: int) -> list[Offer]:
+    offers: list[Offer] = []
     for q in queries:
         for mod in SOURCES:
             t0 = time.time()
@@ -52,7 +54,7 @@ def main() -> None:
     pages = 1 if quick else 3
     OUT.mkdir(exist_ok=True)
 
-    result = {}
+    result: dict[str, Any] = {}
     for profile, queries in (("target", TARGET_QUERIES), ("bridge", BRIDGE_QUERIES)):
         print(f"\n=== {profile.upper()} ({len(queries)} queries, {pages} page(s)) ===")
         raw = collect(queries, pages)

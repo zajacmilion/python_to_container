@@ -9,18 +9,19 @@ import io
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_buffering=True)
 
-from python_to_container.scraper.aggregate import analyse, dedupe   # noqa: E402
-from python_to_container.scraper.common import Offer                # noqa: E402
-from python_to_container.scraper.relevance import split             # noqa: E402
+from python_to_container.scraper.aggregate import analyse, dedupe  # noqa: E402
+from python_to_container.scraper.common import Offer  # noqa: E402
+from python_to_container.scraper.relevance import split  # noqa: E402
 
 DATA = Path("data")
 
 
 def load() -> list[Offer]:
-    offers = []
+    offers: list[Offer] = []
     for f in DATA.glob("offers_*.json"):
         for d in json.loads(f.read_text(encoding="utf-8")):
             offers.append(Offer(**d))
@@ -35,7 +36,7 @@ def main() -> None:
     for k, v in buckets.items():
         print(f"  {k:14} {len(v):5}")
 
-    out = {k: analyse(v, k) for k, v in buckets.items() if v}
+    out: dict[str, Any] = {k: analyse(v, k) for k, v in buckets.items() if v}
 
     # What the AI roles want that the QA roles don't - the actual gap to close.
     ai = {t["name"]: t["pct"] for t in out["ai_core"]["tech"]}

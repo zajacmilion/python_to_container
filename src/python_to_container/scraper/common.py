@@ -1,17 +1,21 @@
 """Shared HTTP + data model for the job-board scrapers."""
+
 from __future__ import annotations
 
 import json
 import re
 import subprocess
 import time
-from dataclasses import dataclass, field, asdict
-from typing import Any
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
+from typing import Any, cast
 
 import requests
 
-UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-      "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+)
 
 HEADERS = {
     "User-Agent": UA,
@@ -23,7 +27,7 @@ _session = requests.Session()
 _session.headers.update(HEADERS)
 
 
-def get(url: str, *, timeout: int = 30, allow_curl: bool = True, **kw) -> str:
+def get(url: str, *, timeout: int = 30, allow_curl: bool = True, **kw: Any) -> str:
     """GET a URL, falling back to curl when the site blocks python-requests.
 
     pracuj.pl fingerprints the TLS handshake and 403s requests/urllib3,
@@ -42,25 +46,33 @@ def get(url: str, *, timeout: int = 30, allow_curl: bool = True, **kw) -> str:
 
 
 def _curl(url: str, *, timeout: int = 30) -> str:
-    cmd = ["curl", "-sL", "--compressed", "--max-time", str(timeout),
-           "-H", f"User-Agent: {UA}",
-           "-H", "Accept-Language: pl-PL,pl;q=0.9,en;q=0.8",
-           url]
+    cmd = [
+        "curl",
+        "-sL",
+        "--compressed",
+        "--max-time",
+        str(timeout),
+        "-H",
+        f"User-Agent: {UA}",
+        "-H",
+        "Accept-Language: pl-PL,pl;q=0.9,en;q=0.8",
+        url,
+    ]
     out = subprocess.run(cmd, capture_output=True, timeout=timeout + 15)
     return out.stdout.decode("utf-8", errors="replace")
 
 
-def post_json(url: str, payload: dict, *, timeout: int = 30) -> Any:
-    r = _session.post(url, json=payload, timeout=timeout,
-                      headers={"Content-Type": "application/json"})
+def post_json(url: str, payload: dict[str, str], *, timeout: int = 30) -> Any:
+    r = _session.post(
+        url, json=payload, timeout=timeout, headers={"Content-Type": "application/json"}
+    )
     r.raise_for_status()
     return r.json()
 
 
-def next_data(html: str) -> dict | None:
+def next_data(html: str) -> dict[str, Any] | None:
     """Extract the __NEXT_DATA__ blob used by pracuj.pl / theprotocol.it."""
-    m = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>',
-                  html, re.S)
+    m = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', html, re.S)
     return json.loads(m.group(1)) if m else None
 
 
@@ -73,9 +85,9 @@ def flight_payload(html: str) -> str:
     return "".join(chunks).encode().decode("unicode_escape", errors="ignore")
 
 
-def json_after(raw: str, marker: str) -> list[dict]:
+def json_after(raw: str, marker: str) -> list[dict[str, Any]]:
     """Pull the JSON array that follows `marker` inside a flight payload."""
-    out: list[dict] = []
+    out: list[dict[str, Any]] = []
     idx = raw.find(marker)
     if idx < 0:
         return out
@@ -101,11 +113,14 @@ def json_after(raw: str, marker: str) -> list[dict]:
             depth -= 1
             if depth == 0:
                 try:
-                    out = json.loads(raw[start:i + 1])
+                    parsed = json.loads(raw[start : i + 1])
                 except json.JSONDecodeError:
                     pass
+                else:
+                    if isinstance(parsed, list):
+                        out = cast(list[dict[str, Any]], parsed)
                 break
-    return out if isinstance(out, list) else []
+    return out
 
 
 @dataclass
@@ -121,15 +136,15 @@ class Offer:
     salary_min: float | None = None
     salary_max: float | None = None
     currency: str = ""
-    skills: list[str] = field(default_factory=list)
+    skills: list[str] = field(default_factory=list[str])
     text: str = ""
 
     def key(self) -> str:
         """Identity for cross-portal dedupe."""
-        norm = lambda s: re.sub(r"[^a-z0-9]", "", (s or "").lower())
+        norm: Callable[[str], str] = lambda s: re.sub(r"[^a-z0-9]", "", (s or "").lower())
         return f"{norm(self.company)}|{norm(self.title)}"
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 

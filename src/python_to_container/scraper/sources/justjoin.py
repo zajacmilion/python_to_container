@@ -1,6 +1,7 @@
 """justjoin.it - offers live in the Next.js App Router streaming payload."""
 from __future__ import annotations
 
+from typing import Any
 from urllib.parse import quote
 
 from ..common import Offer, flight_payload, get, json_after, polite
@@ -9,7 +10,7 @@ BASE = "https://justjoin.it"
 NAME = "justjoin.it"
 
 
-def _salary(employment_types: list[dict]) -> tuple[float | None, float | None, str]:
+def _salary(employment_types: list[dict[str, Any]]) -> tuple[float | None, float | None, str]:
     for et in employment_types or []:
         if et.get("currency") == "PLN" and et.get("from") is not None:
             return et.get("from"), et.get("to"), "PLN"

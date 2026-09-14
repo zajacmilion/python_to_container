@@ -1,18 +1,22 @@
 """Turn a pile of offers into the counts that drive the learning path."""
+
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from typing import Any
+
+from python_to_container.scraper.common import Offer
 
 from .taxonomy import CANON_CATEGORY, from_offer
 
 
-def dedupe(offers: list) -> list:
+def dedupe(offers: list[Offer]) -> list[Offer]:
     """Same job posted to several portals counts once.
 
     czyjesteldorado re-publishes the other portals, so without this the
     aggregator would double-weight everything it mirrors.
     """
-    seen: dict[str, object] = {}
+    seen: dict[str, Offer] = {}
     for o in sorted(offers, key=lambda x: x.source.startswith("czyjesteldorado")):
         k = o.key()
         if k not in seen and len(k) > 4:
@@ -20,12 +24,12 @@ def dedupe(offers: list) -> list:
     return list(seen.values())
 
 
-def analyse(offers: list, profile: str = "") -> dict:
-    tech = Counter()
-    by_cat = defaultdict(Counter)
-    by_seniority = defaultdict(Counter)
-    cooccur = defaultdict(Counter)
-    salary_of = defaultdict(list)
+def analyse(offers: list[Offer], profile: str = "") -> dict[str, Any]:
+    tech: Counter[str] = Counter()
+    by_cat: defaultdict[str, Counter[str]] = defaultdict(Counter)
+    by_seniority: defaultdict[str, Counter[str]] = defaultdict(Counter)
+    cooccur: defaultdict[str, Counter[str]] = defaultdict(Counter)
+    salary_of: defaultdict[str, list[float]] = defaultdict(list)
 
     for o in offers:
         techs = from_offer(o)
@@ -66,10 +70,18 @@ def analyse(offers: list, profile: str = "") -> dict:
 
 def _norm_seniority(raw: str) -> str:
     r = (raw or "").lower()
-    for key, label in (("trainee", "junior"), ("intern", "junior"), ("junior", "junior"),
-                       ("mid", "mid"), ("regular", "mid"),
-                       ("senior", "senior"), ("expert", "lead"), ("lead", "lead"),
-                       ("architect", "lead"), ("manager", "lead")):
+    for key, label in (
+        ("trainee", "junior"),
+        ("intern", "junior"),
+        ("junior", "junior"),
+        ("mid", "mid"),
+        ("regular", "mid"),
+        ("senior", "senior"),
+        ("expert", "lead"),
+        ("lead", "lead"),
+        ("architect", "lead"),
+        ("manager", "lead"),
+    ):
         if key in r:
             return label
     return "unspecified"

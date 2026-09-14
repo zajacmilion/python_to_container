@@ -4,9 +4,12 @@ Portals spell the same thing many ways ("GCP" / "Google Cloud Platform",
 "k8s" / "Kubernetes"). Everything here maps to a canonical label grouped
 into a category, so the aggregate counts mean something.
 """
+
 from __future__ import annotations
 
 import re
+
+from .common import Offer
 
 # category -> canonical name -> alias patterns (matched case-insensitively)
 VOCAB: dict[str, dict[str, list[str]]] = {
@@ -83,16 +86,28 @@ VOCAB: dict[str, dict[str, list[str]]] = {
     "Evaluation / Quality": {
         "Evals / benchmarking": [r"\bevals?\b", r"evaluation", r"benchmark", r"ewaluacj"],
         "Guardrails / safety": [r"guardrail", r"\bsafety\b", r"responsible ai", r"ai governance"],
-        "Observability": [r"observability", r"\btracing\b", r"opentelemetry", r"\botel\b",
-                          r"grafana", r"prometheus", r"datadog"],
+        "Observability": [
+            r"observability",
+            r"\btracing\b",
+            r"opentelemetry",
+            r"\botel\b",
+            r"grafana",
+            r"prometheus",
+            r"datadog",
+        ],
         "A/B testing": [r"a/b test", r"experimentation"],
         "Hallucination / groundedness": [r"hallucinat", r"groundedness", r"factualit"],
     },
     "Testing (your base)": {
         "pytest": [r"pytest"],
         "Robot Framework": [r"robot ?framework"],
-        "Test automation": [r"test automation", r"automatyzacj\w+ test", r"\bqa\b",
-                            r"\bsdet\b", r"testy automatyczne"],
+        "Test automation": [
+            r"test automation",
+            r"automatyzacj\w+ test",
+            r"\bqa\b",
+            r"\bsdet\b",
+            r"testy automatyczne",
+        ],
         "Selenium": [r"selenium"],
         "Playwright": [r"playwright"],
         "Cypress": [r"cypress"],
@@ -112,8 +127,15 @@ VOCAB: dict[str, dict[str, list[str]]] = {
         "Docker": [r"docker", r"konteneryzacj", r"container"],
         "Kubernetes": [r"kubernetes", r"\bk8s\b", r"\bhelm\b", r"openshift"],
         "Terraform / IaC": [r"terraform", r"\biac\b", r"infrastructure as code", r"pulumi"],
-        "CI/CD": [r"ci/?cd", r"jenkins", r"github actions", r"gitlab ci", r"azure devops",
-                  r"argo ?cd", r"teamcity"],
+        "CI/CD": [
+            r"ci/?cd",
+            r"jenkins",
+            r"github actions",
+            r"gitlab ci",
+            r"azure devops",
+            r"argo ?cd",
+            r"teamcity",
+        ],
         "Git": [r"\bgit\b(?!hub actions)"],
         "Linux": [r"\blinux\b", r"\bunix\b"],
     },
@@ -134,15 +156,13 @@ VOCAB: dict[str, dict[str, list[str]]] = {
 }
 
 # pre-compile: (category, canonical, compiled regex)
-_COMPILED: list[tuple[str, str, re.Pattern]] = [
+_COMPILED: list[tuple[str, str, re.Pattern[str]]] = [
     (cat, canon, re.compile("|".join(pats), re.IGNORECASE))
     for cat, items in VOCAB.items()
     for canon, pats in items.items()
 ]
 
-CANON_CATEGORY: dict[str, str] = {
-    canon: cat for cat, items in VOCAB.items() for canon in items
-}
+CANON_CATEGORY: dict[str, str] = {canon: cat for cat, items in VOCAB.items() for canon in items}
 
 
 def extract(*chunks: str) -> set[str]:
@@ -153,6 +173,6 @@ def extract(*chunks: str) -> set[str]:
     return {canon for _, canon, rx in _COMPILED if rx.search(blob)}
 
 
-def from_offer(offer) -> set[str]:
+def from_offer(offer: Offer) -> set[str]:
     """Skills field is authoritative; description is a weaker secondary signal."""
     return extract(" , ".join(offer.skills), offer.title, offer.text)
