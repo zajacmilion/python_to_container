@@ -12,9 +12,9 @@ from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_buffering=True)
 
-from scraper.aggregate import analyse, dedupe   # noqa: E402
-from scraper.common import Offer                # noqa: E402
-from scraper.relevance import split             # noqa: E402
+from python_to_container.scraper.aggregate import analyse, dedupe   # noqa: E402
+from python_to_container.scraper.common import Offer                # noqa: E402
+from python_to_container.scraper.relevance import split             # noqa: E402
 
 DATA = Path("data")
 

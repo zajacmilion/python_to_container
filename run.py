@@ -13,8 +13,8 @@ from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_buffering=True)
 
-from scraper.aggregate import analyse, dedupe            # noqa: E402
-from scraper.sources import eldorado, justjoin, nofluff, pracuj  # noqa: E402
+from python_to_container.scraper.aggregate import analyse, dedupe            # noqa: E402
+from python_to_container.scraper.sources import eldorado, justjoin, nofluff, pracuj  # noqa: E402
 
 SOURCES = [justjoin, nofluff, pracuj, eldorado]
 

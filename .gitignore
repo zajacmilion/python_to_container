@@ -14,3 +14,6 @@ venv/
 
 # Scraped data and run logs - regenerate with `python run.py`
 data/
+
+# Downloaded artifacts
+artifacts/
