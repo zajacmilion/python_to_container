@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Environments
+.venv/
+venv/
+
+# Tool caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# Scraped data and run logs - regenerate with `python run.py`
+data/
